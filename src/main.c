@@ -11,7 +11,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "custom_malloc.h"
+#include "emb_malloc.h"
 
 typedef struct {
 	char a[1000];
@@ -23,7 +23,72 @@ typedef struct {
 
 #define SIZE 1024
 
+void imprimir(int * valores, int tamanho) {
+	int i;
+
+	for(i = 0; i < tamanho; i++) {
+		printf(" %d ", valores[i]);
+	}
+
+	printf("\n");
+}
+
 int main() {
+
+	if(!embInicializar(SIZE * sizeof(int))) {
+		return 0;
+	}
+
+	int tamanho_a = 10;
+	int tamanho_b = 7;
+
+	int * a = (int *) embMalloc(tamanho_a *sizeof(int));
+	int * b = (int *) embMalloc(tamanho_b *sizeof(int));
+
+	int i;
+	for(i = 0; i < tamanho_a; i++) {
+		a[i] = i;
+	}
+
+	for(i = 0; i < tamanho_b; i++) {
+		b[i] = i;
+	}
+
+	imprimir(a, tamanho_a);
+	imprimir(b, tamanho_b);
+
+	embFree(a);
+
+	// Vetor c
+
+	int tamanho_c = 1;
+
+	int * c = (int *) embMalloc(tamanho_c *sizeof(int));
+
+	for(i = 0; i < tamanho_c; i++) {
+		c[i] = tamanho_c - i;
+	}
+
+	imprimir(c, tamanho_c);
+
+	// Vetor d
+
+	int tamanho_d = 1;
+
+	int * d = (int *) embMalloc(tamanho_d *sizeof(int));
+
+	for(i = 0; i < tamanho_d; i++) {
+		d[i] = tamanho_d - i;
+	}
+
+	imprimir(d, tamanho_d);
+
+	printf("a: %p\n", a);
+	printf("b: %p\n", b);
+	printf("c: %p\n", c);
+	printf("d: %p\n", d);
+
+	/*
 	//char buf[SIZE];
 	//char* buf = malloc(SIZE * sizeof(char));
 
@@ -71,28 +136,7 @@ int main() {
 	printf("Tempo cel:   %f\n", tempo_cel);
 
 	embDestruir();
+	*/
 
 //	free(buf);
-	/*
-	 char *str,*str1;
-
-	 str=myalloc(100);
-	 printf("\nMemory address: %p",str);
-	 printf("\nMCB count: %-3d \tAllocated Memory: %-10d",mcb_count,allocated_mem);
-	 myfree(str);
-	 str1=myalloc(200);
-	 printf("\n\nMemory address: %p",str1);
-	 printf("\nMCB count: %-3d \tAllocated Memory: %-10d\n",mcb_count,allocated_mem);
-
-	 printf("--------------------------\n");
-
-	 int *i = myalloc(sizeof(int));
-
-	 printf("Valor lixo: %d\n", *i);
-
-	 *i = 10;
-
-	 printf("Valor lixo: %d\n", *i);
-
-	 myfree(i);*/
 }

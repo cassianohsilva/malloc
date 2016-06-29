@@ -5,7 +5,7 @@
  *      Author: cassiano
  */
 
-#include "custom_malloc.h"
+#include "emb_malloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -47,12 +47,14 @@ enum {
 };
 
 // Inicializa a memória
-void embInicializar(size_t tamanho_em_bytes) {
+int embInicializar(size_t tamanho_em_bytes) {
 	memoria = (char *) sbrk(0);
 
 	if (sbrk(tamanho_em_bytes) == (void*) -1) {
 		fprintf(stderr, "Não foi possível instanciar o alocador\n");
 		memoria = NULL;
+
+		return 0;
 	} else {
 		memset(memoria, 0, tamanho_em_bytes);
 
@@ -62,6 +64,8 @@ void embInicializar(size_t tamanho_em_bytes) {
 		memoria_alocada = 0;
 		memoria_final = memoria_inicio + tamanho_em_bytes;
 	}
+
+	return 1;
 }
 
 // Aloca a memória
