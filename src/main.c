@@ -13,17 +13,27 @@
 
 #include "custom_malloc.h"
 
-#define MAX 100
+typedef struct {
+	char a[1000];
+	int b[50];
+} estrutura;
 
-#define SIZE 1024*1024
+//#define MAX 100
+#define MAX 50
+
+#define SIZE 1024
 
 int main() {
 	//char buf[SIZE];
-	char* buf = malloc(SIZE * sizeof(char));
+	//char* buf = malloc(SIZE * sizeof(char));
 
-	memset(buf, 0, SIZE);
+//	memset(buf, 0, SIZE);
 
-	InitMem(buf, SIZE);
+	//embInicializar(buf, SIZE);
+//	embInicializar(SIZE  * sizeof(byte));
+//	embInicializar(SIZE  * sizeof(int));
+//	embInicializar(SIZE  * sizeof(double));
+	embInicializar(SIZE  * sizeof(estrutura));
 
 	int i;
 
@@ -35,10 +45,13 @@ int main() {
 	for (i = 0; i < MAX; i++) {
 
 		t1 = clock();
-		char *k = (char *) myalloc(sizeof(char));
+//		char *k = (char *) embMalloc(sizeof(char));
+//		int *k = (int *) embMalloc(sizeof(int));
+//		double *k = (double *) embMalloc(sizeof(double));
+		estrutura *k = (estrutura *) embMalloc(sizeof(estrutura));
 		t2 = clock();
 
-		myfree(k);
+		embFree(k);
 
 		tempo_cel += (double) (t2 - t1) * 1000 / CLOCKS_PER_SEC;
 	}
@@ -57,7 +70,9 @@ int main() {
 	printf("\nTempo malloc: %f\n", tempo_malloc);
 	printf("Tempo cel:   %f\n", tempo_cel);
 
-	free(buf);
+	embDestruir();
+
+//	free(buf);
 	/*
 	 char *str,*str1;
 

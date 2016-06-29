@@ -10,109 +10,144 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 
+#define DEBUG_MALLOC 0
+
+// Estrutura para representar os blocos
 typedef struct {
-	int is_available;
-	int size;
+	uint esta_disponivel : 1;
+	uint tamanho : 31;
 } MCB, *MCB_P;
 
-char *mem_start_p;
-int max_mem;
-int allocated_mem; /* this is the memory in use. */
-int mcb_count;
+byte *memoria;
 
-char *heap_end;
+// Inicio da memória
+byte *memoria_inicio;
+// Tamanho máximo da memória
+int memoria_maxima;
+
+// Tamanho total da memória em uso
+int memoria_alocada;
+
+// Número de blocos alocados
+int numero_blocos;
+
+byte *memoria_final;
 
 //MCB_P memallocate(MCB_P, int);
 
 enum {
 	NEW_MCB = 0, NO_MCB, REUSE_MCB
 };
+
+// Enum para representar se um bloco está e uso ou não
 enum {
 	FREE, IN_USE
 };
-void InitMem(char *ptr, int size_in_bytes) {
-	/* store the ptr and size_in_bytes in global variable */
 
-	max_mem = size_in_bytes;
-	mem_start_p = ptr;
-	mcb_count = 0;
-	allocated_mem = 0;
-	heap_end = mem_start_p + size_in_bytes;
-	/* This function is complete :-) */
+// Inicializa a memória
+void embInicializar(size_t tamanho_em_bytes) {
 
+	memoria = malloc(tamanho_em_bytes);
+
+	memset(memoria, 0, tamanho_em_bytes);
+
+	memoria_maxima = tamanho_em_bytes;
+	memoria_inicio = memoria;
+	numero_blocos = 0;
+	memoria_alocada = 0;
+	memoria_final = memoria_inicio + tamanho_em_bytes;
 }
 
-void *myalloc(int elem_size) {
+// Aloca a memória
+void *embMalloc(int tamanho) {
 	/* check whether any chunk (allocated before) is free first */
 
 	MCB_P p_mcb;
 	int flag = NO_MCB;
 
-	p_mcb = (MCB_P) mem_start_p;
+	p_mcb = (MCB_P) memoria_inicio;
 
 	int sz;
 
 	sz = sizeof(MCB);
 
-	if ((elem_size + sz) > (max_mem - (allocated_mem + mcb_count * sz))) {
-		printf("Max size Excedded!!!!!");
+	if ((tamanho + sz) > (memoria_maxima - (memoria_alocada + numero_blocos * sz))) {
+		fprintf(stderr, "Tamanho máximo da memória excedido\n");
 		return NULL;
 	}
 
-	while (heap_end > ((char *) p_mcb + elem_size + sz)) {
+	// Pesquisa o primeiro bloco livre que pode caber a memória a ser alocada
+	while (memoria_final > ((byte *) p_mcb + tamanho + sz)) {
 
-		if (p_mcb->is_available == 0) {
+		if (p_mcb->esta_disponivel == 0) {
 
-			if (p_mcb->size == 0) {
+			if (p_mcb->tamanho == 0) {
 				flag = NEW_MCB;
 				break;
 			}
-			if (p_mcb->size > (elem_size + sz)) {
+			if (p_mcb->tamanho > (tamanho + sz)) {
 				flag = REUSE_MCB;
 				break;
 			}
 		}
-		p_mcb = (MCB_P) ((char *) p_mcb + p_mcb->size);
+		p_mcb = (MCB_P) ((byte *) p_mcb + p_mcb->tamanho);
 
 	}
 
 	if (flag != NO_MCB) {
-		p_mcb->is_available = 1;
+		p_mcb->esta_disponivel = 1;
 
 		if (flag == NEW_MCB) {
-			p_mcb->size = elem_size + sizeof(MCB);
-			mcb_count++;
+			p_mcb->tamanho = tamanho + sizeof(MCB);
+			numero_blocos++;
 		}
-		allocated_mem += elem_size;
-		return ((char *) p_mcb + sz);
+		memoria_alocada += tamanho;
+		return ((byte *) p_mcb + sz);
 	}
 
-	printf(" Returning as we could not allocate any MCB \n");
+	fprintf(stderr, "Não foi possível alocar a quantidade de memória requisitada\n");
 	return NULL;
-
-	/* if size of the available chunk is equal to greater than required size, use that chunk */
-
 }
 
+
+// TODO Implementar essa função
 int MemEfficiency() {
 	/* keep track of number of MCBs in a global variable */
-	return mcb_count;
+	return numero_blocos;
 	/* This function is complete as well. :-) */
 
 }
 
-void myfree(void *p) {
-	/* Mark in MCB that this chunk is free */
+
+// Libera um espaço de memória
+void embFree(void *p) {
+	// Marca um bloco como livre
 	MCB_P ptr = (MCB_P) p;
 	ptr--;
 
-	mcb_count--;
-	ptr->is_available = FREE;
-	printf("\nAllocated mem: %d ", ptr->size);
-	allocated_mem -= (ptr->size - sizeof(MCB));
-	printf("\nAllocated mem: %d ", allocated_mem);
-	printf("\nMemory Freed...");
+	numero_blocos--;
+	ptr->esta_disponivel = FREE;
+
+#if DEBUG_MALLOC
+	printf("\nMemória alocada antes: %d\n", ptr->tamanho);
+#endif
+
+	memoria_alocada -= (ptr->tamanho - sizeof(MCB));
+
+#if DEBUG_MALLOC
+	printf("\nMemória alocada depois: %d\n", memoria_alocada);
+	printf("\nMemória liberada\n");
+#endif
 }
 
+void embDestruir() {
+	free(memoria);
+
+	memoria = NULL;
+	memoria_inicio = NULL;
+	memoria_final = NULL;
+
+	memoria_maxima = 0;
+	memoria_alocada = 0;
+}

@@ -8,10 +8,17 @@
 #ifndef CUSTOM_MALLOC_H_
 #define CUSTOM_MALLOC_H_
 
-void InitMem(char *ptr, int size_in_bytes);
+#include <stdlib.h>
 
-void *myalloc(int elem_size);
+typedef char byte;
+typedef unsigned int uint;
 
-void myfree(void *p);
+void embInicializar(size_t size_in_bytes);
+
+void *embMalloc(int elem_size);
+
+void embFree(void *p);
+
+void embDestruir();
 
 #endif /* CUSTOM_MALLOC_H_ */
