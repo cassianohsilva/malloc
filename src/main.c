@@ -19,7 +19,7 @@ typedef struct {
 } estrutura;
 
 //#define MAX 100
-#define MAX 50
+#define MAX 100
 
 #define SIZE 1024
 

@@ -10,13 +10,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define DEBUG_MALLOC 0
 
 // Estrutura para representar os blocos
 typedef struct {
-	uint esta_disponivel : 1;
-	uint tamanho : 31;
+	uint esta_disponivel :1;
+	uint tamanho :31;
 } MCB, *MCB_P;
 
 byte *memoria;
@@ -47,16 +48,20 @@ enum {
 
 // Inicializa a memória
 void embInicializar(size_t tamanho_em_bytes) {
+	memoria = (char *)sbrk(0);
 
-	memoria = malloc(tamanho_em_bytes);
+	if (sbrk(tamanho_em_bytes) == (void*) -1) {
+		fprintf(stderr, "Não foi possível instanciar o alocador\n");
+		memoria = NULL;
+	} else {
+		memset(memoria, 0, tamanho_em_bytes);
 
-	memset(memoria, 0, tamanho_em_bytes);
-
-	memoria_maxima = tamanho_em_bytes;
-	memoria_inicio = memoria;
-	numero_blocos = 0;
-	memoria_alocada = 0;
-	memoria_final = memoria_inicio + tamanho_em_bytes;
+		memoria_maxima = tamanho_em_bytes;
+		memoria_inicio = memoria;
+		numero_blocos = 0;
+		memoria_alocada = 0;
+		memoria_final = memoria_inicio + tamanho_em_bytes;
+	}
 }
 
 // Aloca a memória
@@ -72,7 +77,8 @@ void *embMalloc(int tamanho) {
 
 	sz = sizeof(MCB);
 
-	if ((tamanho + sz) > (memoria_maxima - (memoria_alocada + numero_blocos * sz))) {
+	if ((tamanho + sz)
+			> (memoria_maxima - (memoria_alocada + numero_blocos * sz))) {
 		fprintf(stderr, "Tamanho máximo da memória excedido\n");
 		return NULL;
 	}
@@ -106,10 +112,10 @@ void *embMalloc(int tamanho) {
 		return ((byte *) p_mcb + sz);
 	}
 
-	fprintf(stderr, "Não foi possível alocar a quantidade de memória requisitada\n");
+	fprintf(stderr,
+			"Não foi possível alocar a quantidade de memória requisitada\n");
 	return NULL;
 }
-
 
 // TODO Implementar essa função
 int MemEfficiency() {
@@ -118,7 +124,6 @@ int MemEfficiency() {
 	/* This function is complete as well. :-) */
 
 }
-
 
 // Libera um espaço de memória
 void embFree(void *p) {
