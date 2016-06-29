@@ -16,9 +16,9 @@
 
 // Estrutura para representar os blocos
 typedef struct {
-	uint esta_disponivel :1;
+	uint disponivel :1;
 	uint tamanho :31;
-} MCB, *MCB_P;
+} BDM;
 
 byte *memoria;
 
@@ -38,17 +38,17 @@ byte *memoria_final;
 //MCB_P memallocate(MCB_P, int);
 
 enum {
-	NEW_MCB = 0, NO_MCB, REUSE_MCB
+	NOVO_BLOCO = 0, SEM_BLOCO, REUTILIZAR_BLOCO
 };
 
 // Enum para representar se um bloco está e uso ou não
 enum {
-	FREE, IN_USE
+	LIVRE, OCUPADO
 };
 
 // Inicializa a memória
 void embInicializar(size_t tamanho_em_bytes) {
-	memoria = (char *)sbrk(0);
+	memoria = (char *) sbrk(0);
 
 	if (sbrk(tamanho_em_bytes) == (void*) -1) {
 		fprintf(stderr, "Não foi possível instanciar o alocador\n");
@@ -66,50 +66,44 @@ void embInicializar(size_t tamanho_em_bytes) {
 
 // Aloca a memória
 void *embMalloc(int tamanho) {
-	/* check whether any chunk (allocated before) is free first */
+	BDM* bloco;
+	int flag = SEM_BLOCO;
 
-	MCB_P p_mcb;
-	int flag = NO_MCB;
+	bloco = (BDM*) memoria_inicio;
 
-	p_mcb = (MCB_P) memoria_inicio;
+	int tamanho_bloco = sizeof(BDM);
 
-	int sz;
-
-	sz = sizeof(MCB);
-
-	if ((tamanho + sz)
-			> (memoria_maxima - (memoria_alocada + numero_blocos * sz))) {
+	if ((tamanho + tamanho_bloco)
+			> (memoria_maxima - (memoria_alocada + numero_blocos * tamanho_bloco))) {
 		fprintf(stderr, "Tamanho máximo da memória excedido\n");
 		return NULL;
 	}
 
 	// Pesquisa o primeiro bloco livre que pode caber a memória a ser alocada
-	while (memoria_final > ((byte *) p_mcb + tamanho + sz)) {
+	while (memoria_final > ((byte *) bloco + tamanho + tamanho_bloco)) {
+		if (bloco->disponivel == LIVRE) {
 
-		if (p_mcb->esta_disponivel == 0) {
-
-			if (p_mcb->tamanho == 0) {
-				flag = NEW_MCB;
+			if (bloco->tamanho == 0) {
+				flag = NOVO_BLOCO;
 				break;
 			}
-			if (p_mcb->tamanho > (tamanho + sz)) {
-				flag = REUSE_MCB;
+			if (bloco->tamanho > (tamanho + tamanho_bloco)) {
+				flag = REUTILIZAR_BLOCO;
 				break;
 			}
 		}
-		p_mcb = (MCB_P) ((byte *) p_mcb + p_mcb->tamanho);
-
+		bloco = (BDM*) ((byte *) bloco + bloco->tamanho);
 	}
 
-	if (flag != NO_MCB) {
-		p_mcb->esta_disponivel = 1;
+	if (flag != SEM_BLOCO) {
+		bloco->disponivel = OCUPADO;
 
-		if (flag == NEW_MCB) {
-			p_mcb->tamanho = tamanho + sizeof(MCB);
+		if (flag == NOVO_BLOCO) {
+			bloco->tamanho = tamanho + sizeof(BDM);
 			numero_blocos++;
 		}
 		memoria_alocada += tamanho;
-		return ((byte *) p_mcb + sz);
+		return ((byte *) bloco + tamanho_bloco);
 	}
 
 	fprintf(stderr,
@@ -118,32 +112,26 @@ void *embMalloc(int tamanho) {
 }
 
 // TODO Implementar essa função
-int MemEfficiency() {
-	/* keep track of number of MCBs in a global variable */
+int embMemoria() {
 	return numero_blocos;
-	/* This function is complete as well. :-) */
-
 }
 
 // Libera um espaço de memória
-void embFree(void *p) {
+int embFree(void *ponteiro) {
 	// Marca um bloco como livre
-	MCB_P ptr = (MCB_P) p;
-	ptr--;
+	if (ponteiro) {
+		BDM* ponteiro_bloco = (BDM*) ponteiro;
+		ponteiro_bloco--;
 
-	numero_blocos--;
-	ptr->esta_disponivel = FREE;
+		numero_blocos--;
+		ponteiro_bloco->disponivel = LIVRE;
 
-#if DEBUG_MALLOC
-	printf("\nMemória alocada antes: %d\n", ptr->tamanho);
-#endif
+		memoria_alocada -= (ponteiro_bloco->tamanho - sizeof(BDM));
 
-	memoria_alocada -= (ptr->tamanho - sizeof(MCB));
-
-#if DEBUG_MALLOC
-	printf("\nMemória alocada depois: %d\n", memoria_alocada);
-	printf("\nMemória liberada\n");
-#endif
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 void embDestruir() {

@@ -13,11 +13,11 @@
 typedef char byte;
 typedef unsigned int uint;
 
-void embInicializar(size_t size_in_bytes);
+void embInicializar(size_t tamanho_em_bytes);
 
-void *embMalloc(int elem_size);
+void *embMalloc(int tamanho);
 
-void embFree(void *p);
+int embFree(void *ponteiro);
 
 void embDestruir();
 
