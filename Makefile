@@ -1,10 +1,10 @@
 CXXFLAGS =	-O2 -g -Wall -fmessage-length=0
 
-OBJS =		src/main.o src/emb_malloc.o
+OBJS =		src/emb_main.o src/emb_malloc.o
 
 LIBS =
 
-TARGET =	main
+TARGET =	emb_main
 
 $(TARGET):	$(OBJS)
 	gcc -o $(TARGET) $(OBJS) $(LIBS)

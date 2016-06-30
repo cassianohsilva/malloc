@@ -1,4 +1,5 @@
 main
+emb_main
 
 # Object files
 *.o

@@ -115,8 +115,10 @@ void *embMalloc(int tamanho) {
 	return NULL;
 }
 
-// TODO Implementar essa função
 int embMemoria() {
+	printf("Tamanho total da memória: %d bytes\n", memoria_maxima);
+	printf("Tamanho total da memória alocada: %d bytes\n", memoria_alocada);
+
 	return numero_blocos;
 }
 
@@ -139,7 +141,7 @@ int embFree(void *ponteiro) {
 }
 
 void embDestruir() {
-	free(memoria);
+//	free(memoria);
 
 	memoria = NULL;
 	memoria_inicio = NULL;
